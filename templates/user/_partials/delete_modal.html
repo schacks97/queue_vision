@@ -1,0 +1,55 @@
+<!-- Delete User Confirmation Modal -->
+<div class="modal fade" id="deleteUserModal" tabindex="-1" aria-labelledby="deleteUserModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title" id="deleteUserModalLabel">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          Confirm User Deletion
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-danger" role="alert">
+          <i class="fas fa-exclamation-circle me-2"></i>
+          <strong>Warning:</strong> This action will permanently delete the user account and cannot be undone.
+        </div>
+        
+        <p>Are you sure you want to delete the following user?</p>
+        
+        <div class="card bg-light border-0">
+          <div class="card-body">
+            <div class="row mb-2">
+              <div class="col-4"><strong>Name:</strong></div>
+              <div class="col-8" id="deleteUserName"></div>
+            </div>
+            <div class="row mb-2">
+              <div class="col-4"><strong>Email:</strong></div>
+              <div class="col-8" id="deleteUserEmail"></div>
+            </div>
+            <div class="row">
+              <div class="col-4"><strong>Company:</strong></div>
+              <div class="col-8" id="deleteUserCompany"></div>
+            </div>
+          </div>
+        </div>
+        
+        <p class="text-danger small mt-3">
+          <i class="fas fa-exclamation-triangle me-1"></i>
+          <strong>Warning:</strong> This action is permanent and cannot be undone. All user data will be removed from the system.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="fas fa-times me-1"></i> Cancel
+        </button>
+        <form id="deleteUserForm" method="post" style="display: inline;">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger">
+            <i class="fas fa-trash me-1"></i> Delete User
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

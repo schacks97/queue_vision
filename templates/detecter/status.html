@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block head_title %}Processing — detecter{% endblock head_title %}
+
+{% block page_title %}Processing Video{% endblock page_title %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+   
+    <li class="breadcrumb-item"><a href="{% url 'detecter:upload' %}">detecter</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Processing</li>
+  </ol>
+</nav>
+{% endblock breadcrumbs %}
+
+{% block styles %}
+<style>
+  .progress { height: 24px; border-radius: 12px; }
+  .progress-bar { transition: width 0.6s ease; font-size: 0.8rem; font-weight: 600; }
+  .stat-label { color: #6c757d; font-size: 0.85rem; }
+  .stat-value { font-weight: 600; font-size: 1.05rem; }
+
+  .pulse-dot {
+    display: inline-block; width: 10px; height: 10px; border-radius: 50%;
+    background: #3b7ddd; animation: pulse 1.2s ease-in-out infinite; margin-right: 6px;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+  }
+  .pulse-dot.completed { background: #28a745; animation: none; }
+  .pulse-dot.failed { background: #dc3545; animation: none; }
+
+  .video-panel video,
+  .video-panel img {
+    width: 100%;
+    border-radius: 8px;
+    background: #000;
+  }
+  .video-panel .panel-label {
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+  .inference-placeholder {
+    width: 100%;
+    aspect-ratio: 16/9;
+    border-radius: 8px;
+    background: #1a1a2e;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    color: #6c757d;
+  }
+  .inference-placeholder i { font-size: 2.5rem; margin-bottom: 8px; }
+</style>
+{% endblock styles %}
+
+{% block content %}
+<div class="row mt-3 g-3">
+
+  <!-- Input Video & Live Inference -->
+  <div class="col-lg-6">
+    <div class="card video-panel">
+      <div class="card-body">
+        <div class="panel-label text-muted"><i class="fas fa-video me-1"></i> Input Video</div>
+        {% if input_video_url %}
+        <video id="inputVideo" controls muted autoplay loop playsinline preload="auto">
+          <source src="{{ input_video_url }}" type="video/mp4">
+          Your browser does not support the video tag.
+        </video>
+        {% else %}
+        <div class="inference-placeholder">
+          <i class="fas fa-film"></i>
+          <span class="small">Input video not available for preview</span>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card video-panel">
+      <div class="card-body">
+        <div class="panel-label text-muted"><i class="fas fa-brain me-1"></i> Live Inference</div>
+        <div id="inferencePlaceholder" class="inference-placeholder">
+          <i class="fas fa-spinner fa-spin"></i>
+          <span class="small">Waiting for inference frames…</span>
+        </div>
+        <img id="inferenceStream"
+             src="{% url 'detecter:stream' job.id %}"
+             alt="Live inference"
+             style="display:none;"
+             onload="this.style.display='block'; document.getElementById('inferencePlaceholder').style.display='none';">
+      </div>
+    </div>
+  </div>
+
+  <!-- Status & Progress -->
+  <div class="col-12">
+    <div class="card">
+      <div class="card-body">
+
+        <!-- Status badge -->
+        <div class="d-flex align-items-center mb-3">
+          {% if job.status == "processing" %}
+          <span class="pulse-dot"></span>
+          <span class="text-primary fw-semibold">Processing…</span>
+          {% elif job.status == "completed" %}
+          <span class="pulse-dot completed"></span>
+          <span class="text-success fw-semibold">Completed</span>
+          {% elif job.status == "failed" %}
+          <span class="pulse-dot failed"></span>
+          <span class="text-danger fw-semibold">Failed</span>
+          {% else %}
+          <span class="pulse-dot"></span>
+          <span class="text-muted fw-semibold">Pending</span>
+          {% endif %}
+          <span class="ms-auto text-muted small">{{ job.original_filename|default:"Video" }} &middot; {{ job.id }}</span>
+        </div>
+
+        <!-- Progress bar -->
+        <div class="progress mb-3">
+          <div class="progress-bar bg-primary" id="progressBar"
+               role="progressbar" style="width: {{ job.progress }}%;"
+               aria-valuenow="{{ job.progress }}" aria-valuemin="0" aria-valuemax="100">
+            {{ job.progress }}%
+          </div>
+        </div>
+
+        <!-- Stats row -->
+        <div class="row text-center g-3">
+          <div class="col-3">
+            <div class="stat-label">Frame</div>
+            <div class="stat-value" id="statFrame">{{ job.current_frame }} / {{ job.total_frames }}</div>
+          </div>
+          <div class="col-3">
+            <div class="stat-label">FPS</div>
+            <div class="stat-value" id="statFps">{{ job.processing_fps|floatformat:1 }}</div>
+          </div>
+          <div class="col-3">
+            <div class="stat-label">Vehicles</div>
+            <div class="stat-value" id="statVehicles">{{ job.total_vehicles }}</div>
+          </div>
+          <div class="col-3">
+            <div class="stat-label">Progress</div>
+            <div class="stat-value" id="statPct">{{ job.progress }}%</div>
+          </div>
+        </div>
+
+        {% if job.status == "failed" and job.error_message %}
+        <div class="alert alert-danger mt-4 text-start mb-0">
+          <strong>Error:</strong> {{ job.error_message }}
+        </div>
+        {% endif %}
+
+        <!-- Actions -->
+        <div class="mt-4 text-center">
+          {% if job.status == "completed" %}
+          <a href="{% url 'detecter:results' job.id %}" class="btn btn-success">
+            <i class="fas fa-chart-bar me-2"></i>View Results
+          </a>
+          {% elif job.status == "failed" %}
+          <a href="{% url 'detecter:upload' %}" class="btn btn-outline-primary">
+            <i class="fas fa-redo me-2"></i>Try Again
+          </a>
+          {% endif %}
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock content %}
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const jobStatus = "{{ job.status }}";
+  if (jobStatus !== "processing" && jobStatus !== "pending") return;
+
+  const progressBar       = document.getElementById("progressBar");
+  const statFrame         = document.getElementById("statFrame");
+  const statFps           = document.getElementById("statFps");
+  const statVehicles      = document.getElementById("statVehicles");
+  const statPct           = document.getElementById("statPct");
+
+  function poll() {
+    axios.get("{% url 'detecter:job_status_api' job.id %}")
+      .then(function (res) {
+        const d = res.data;
+
+        // Update progress bar
+        progressBar.style.width = d.progress + "%";
+        progressBar.textContent = d.progress + "%";
+        progressBar.setAttribute("aria-valuenow", d.progress);
+
+        // Update stats
+        statFrame.textContent = d.current_frame + " / " + d.total_frames;
+        statFps.textContent = d.processing_fps.toFixed(1);
+        statVehicles.textContent = d.total_vehicles;
+        statPct.textContent = d.progress + "%";
+
+        if (d.status === "completed") {
+          window.location.href = "{% url 'detecter:results' job.id %}";
+        } else if (d.status === "failed") {
+          window.location.reload();
+        } else {
+          setTimeout(poll, 2000);
+        }
+      })
+      .catch(function () {
+        setTimeout(poll, 5000);
+      });
+  }
+
+  setTimeout(poll, 2000);
+});
+</script>
+{% endblock scripts %}

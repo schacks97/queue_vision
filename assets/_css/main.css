@@ -1,0 +1,479 @@
+
+:root {
+  --color-default: #364d59;
+  --color-primary: #16a34a;
+  --color-primary-hover: #15803d;
+  --color-secondary: #22c55e;
+  --color-neutral: #676565;
+  
+  /* Responsive Typography System */
+  --font-size-base: clamp(12px, 0.85vw, 14px);
+  --font-size-sm: clamp(10px, 0.75vw, 12px);
+  --font-size-lg: clamp(14px, 0.95vw, 16px);
+  --font-size-xl: clamp(15px, 1.05vw, 18px);
+  --font-size-2xl: clamp(16px, 1.25vw, 20px);
+}
+
+html {
+  font-size: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  box-sizing: border-box;
+  margin: 0;
+  font-size: var(--font-size-base);
+  line-height: 1.6;
+}
+
+/* Responsive Typography */
+h1, .h1 { font-size: clamp(1.25rem, 1.75vw, 1.75rem); line-height: 1.2; }
+h2, .h2 { font-size: clamp(1.125rem, 1.5vw, 1.5rem); line-height: 1.3; }
+h3, .h3 { font-size: clamp(1rem, 1.35vw, 1.35rem); line-height: 1.3; }
+h4, .h4 { font-size: clamp(0.9375rem, 1.2vw, 1.2rem); line-height: 1.4; }
+h5, .h5 { font-size: clamp(0.875rem, 1.05vw, 1.05rem); line-height: 1.4; }
+h6, .h6 { font-size: clamp(0.8125rem, 0.95vw, 0.95rem); line-height: 1.5; }
+
+p { font-size: var(--font-size-base); line-height: 1.6; }
+
+/* Form Elements */
+.form-label, label {
+  font-size: clamp(0.75rem, 0.85vw, 0.875rem);
+}
+
+.form-control, .form-select, input, textarea, select {
+  font-size: clamp(0.75rem, 0.85vw, 0.875rem) !important;
+  line-height: 1.5;
+}
+
+/* Buttons */
+.btn {
+  font-size: clamp(0.75rem, 0.85vw, 0.875rem) !important;
+  padding: clamp(0.3rem, 0.45vw, 0.45rem) clamp(0.6rem, 0.85vw, 0.85rem);
+}
+
+.btn-sm {
+  font-size: clamp(0.6875rem, 0.75vw, 0.75rem) !important;
+}
+
+.btn-lg {
+  font-size: clamp(0.875rem, 0.95vw, 0.95rem) !important;
+}
+
+/* Tables */
+table {
+  font-size: clamp(0.6875rem, 0.8vw, 0.8125rem);
+}
+
+table th, table td {
+  font-size: clamp(0.6875rem, 0.8vw, 0.8125rem);
+  padding: clamp(0.4rem, 0.6vw, 0.6rem);
+}
+
+table thead th {
+  font-size: clamp(0.75rem, 0.85vw, 0.85rem);
+}
+
+/* Cards */
+.card-title {
+  font-size: clamp(0.875rem, 1.05vw, 1.05rem);
+}
+
+.card-text, .card-body {
+  font-size: var(--font-size-base);
+}
+
+.card-header {
+  font-size: clamp(0.8125rem, 0.95vw, 0.95rem);
+}
+
+/* Text Utilities */
+.text-sm, .small, small {
+  font-size: clamp(0.6875rem, 0.75vw, 0.75rem) !important;
+}
+
+.text-lg {
+  font-size: clamp(0.875rem, 0.95vw, 0.95rem) !important;
+}
+
+.text-muted {
+  font-size: var(--font-size-base);
+}
+
+/* Strong/Bold Text */
+strong, b, .fw-bold {
+  font-size: inherit;
+}
+
+/* Navigation & Links */
+nav a, .nav-link {
+  font-size: clamp(0.75rem, 0.85vw, 0.875rem);
+}
+
+/* Alerts */
+.alert {
+  font-size: var(--font-size-base);
+}
+
+/* Badges */
+.badge {
+  font-size: clamp(0.6875rem, 0.75vw, 0.75rem);
+}
+
+/* Modal */
+.modal-title {
+  font-size: clamp(0.875rem, 1.05vw, 1.05rem);
+}
+
+.modal-body {
+  font-size: var(--font-size-base);
+}
+
+/* List Items */
+li {
+  font-size: var(--font-size-base);
+  line-height: 1.6;
+}
+
+/* Breadcrumbs */
+.breadcrumb-item {
+  font-size: clamp(0.75rem, 0.8vw, 0.8125rem);
+}
+
+/* Custom Checkbox and Radio */
+@supports (-webkit-appearance: none) or (-moz-appearance: none) {
+
+  input[type=checkbox],
+  input[type=radio] {
+    --active: #16a34a;
+    --active-inner: #fff;
+    --focus: 2px rgba(22, 163, 74, 0.3);
+    --border: #d1d5db;
+    --border-hover: #16a34a;
+    --background: #fff;
+    --disabled: #F6F8FF;
+    --disabled-inner: #E1E6F9;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    height: 21px;
+    outline: none;
+    display: inline-block;
+    vertical-align: top;
+    position: relative;
+    margin: 0;
+    cursor: pointer;
+    border: 1px solid var(--bc, var(--border));
+    background: var(--b, var(--background));
+    transition: background 0.3s, border-color 0.3s, box-shadow 0.2s;
+    margin-right: 0.25rem;
+  }
+
+  input[type=checkbox]:after,
+  input[type=radio]:after {
+    content: "";
+    display: block;
+    left: 0;
+    top: 0;
+    position: absolute;
+    transition: transform var(--d-t, 0.3s) var(--d-t-e, ease), opacity var(--d-o, 0.2s);
+  }
+
+  input[type=checkbox]:checked,
+  input[type=radio]:checked {
+    --b: var(--active);
+    --bc: var(--active);
+    --d-o: .3s;
+    --d-t: .6s;
+    --d-t-e: cubic-bezier(.2, .85, .32, 1.2);
+  }
+
+  input[type=checkbox]:disabled,
+  input[type=radio]:disabled {
+    --b: var(--disabled);
+    cursor: not-allowed;
+    opacity: 0.9;
+  }
+
+  input[type=checkbox]:disabled:checked,
+  input[type=radio]:disabled:checked {
+    --b: var(--disabled-inner);
+    --bc: var(--border);
+  }
+
+  input[type=checkbox]:disabled+label,
+  input[type=radio]:disabled+label {
+    cursor: not-allowed;
+  }
+
+  input[type=checkbox]:hover:not(:checked):not(:disabled),
+  input[type=radio]:hover:not(:checked):not(:disabled) {
+    --bc: var(--border-hover);
+  }
+
+  input[type=checkbox]:focus,
+  input[type=radio]:focus {
+    box-shadow: 0 0 0 var(--focus);
+  }
+
+  input[type=checkbox]:not(.switch),
+  input[type=radio]:not(.switch) {
+    width: 21px;
+  }
+
+  input[type=checkbox]:not(.switch):after,
+  input[type=radio]:not(.switch):after {
+    opacity: var(--o, 0);
+  }
+
+  input[type=checkbox]:not(.switch):checked,
+  input[type=radio]:not(.switch):checked {
+    --o: 1;
+  }
+
+  input[type=checkbox]+label,
+  input[type=radio]+label {
+    font-size: 14px;
+    line-height: 21px;
+    display: inline-block;
+    vertical-align: top;
+    cursor: pointer;
+    margin-left: 4px;
+  }
+
+  input[type=checkbox]:not(.switch) {
+    border-radius: 4px;
+  }
+
+  input[type=checkbox]:not(.switch):after {
+    width: 5px;
+    height: 9px;
+    border: 2px solid var(--active-inner);
+    border-top: 0;
+    border-left: 0;
+    left: 7px;
+    top: 4px;
+    transform: rotate(var(--r, 20deg));
+  }
+
+  input[type=checkbox]:not(.switch):checked {
+    --r: 43deg;
+  }
+
+  input[type=checkbox].switch {
+    width: 38px;
+    border-radius: 11px;
+  }
+
+  input[type=checkbox].switch:after {
+    left: 2px;
+    top: 2px;
+    border-radius: 50%;
+    width: 15px;
+    height: 15px;
+    background: var(--ab, var(--border));
+    transform: translateX(var(--x, 0));
+  }
+
+  input[type=checkbox].switch:checked {
+    --ab: var(--active-inner);
+    --x: 17px;
+  }
+
+  input[type=checkbox].switch:disabled:not(:checked):after {
+    opacity: 0.6;
+  }
+
+  input[type=radio] {
+    border-radius: 50%;
+  }
+
+  input[type=radio]:after {
+    width: 19px;
+    height: 19px;
+    border-radius: 50%;
+    background: var(--active-inner);
+    opacity: 0;
+    transform: scale(var(--s, 0.7));
+  }
+
+  input[type=radio]:checked {
+    --s: .5;
+  }
+}
+
+/* End Custom Checkbox and Radio */
+
+
+.toggle-password {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+
+
+.accordion-button:not(.collapsed) {
+  color: var(--color-primary);
+  background-color: var(--color-neutral);
+  box-shadow: inset 0 calc(-1* var(--bs-accordion-border-width)) 0 var(--color-neutral);
+}
+
+
+blockquote {
+  border-left: 3px solid #e88700;
+  color: #1a1a1a;
+  font-family: Georgia, Times, "Times New Roman", serif;
+  font-size: 1.1rem;
+  font-style: italic;
+  line-height: 1.8rem;
+  margin: 1.1rem 4rem;
+  padding: 1em 2rem;
+  position: relative;
+  transition: 0.2s border ease-in-out;
+  z-index: 0;
+}
+
+blockquote:before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: -4px;
+  height: 2rem;
+  background-color: #fff;
+  width: 5px;
+  margin-top: -1rem;
+}
+blockquote:after {
+  font: var(--fa-font-solid);
+  content: "\f10e";
+  position: absolute;
+  top: 50%;
+  left: -0.5rem;
+  color: #e88700;
+  font-family: "Font Awesome 6 Free";
+  line-height: 1rem;
+  text-align: center;
+  text-indent: -2px;
+  width: 1rem;
+  margin-top: -0.5rem;
+  transition: 0.2s all ease-in-out, 0.4s transform ease-in-out;
+  display: inline-block;
+  font-style: normal;
+  font-variant: normal;
+  text-rendering: auto;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: antialiased;
+}
+
+
+/* Responsive Breakpoint Adjustments */
+@media (max-width: 1200px) {
+  /* Typography is handled by clamp() functions above */
+}
+
+@media (max-width: 980px) {
+  blockquote {
+    font-size: clamp(0.95rem, 1vw, 1.05rem);
+    margin: 1.1em -2rem;
+  }
+}
+
+@media (max-width: 767px) {
+  blockquote {
+    border-top: 2px solid #e88700;
+    border-bottom: 2px solid #e88700;
+    border-left: none;
+    margin: 1.5em 0;
+    padding: 1.5em 1rem;
+  }
+  blockquote:before {
+    left: 50%;
+    top: 0;
+    height: 4px;
+    margin-top: -3px;
+    margin-left: -1rem;
+    width: 2rem;
+  }
+  blockquote:after {
+    font-size: 0.75rem;
+    left: 50%;
+    top: 0;
+    margin-top: -0.5rem;
+    margin-left: -0.5rem;
+  }
+  blockquote cite {
+    text-align: right;
+  }
+}
+
+
+.icon-container {
+  width: 1.25rem;
+  display: inline-block;
+}
+
+
+.page-link {
+  color: var(--color-secondary);
+  background-color: #ffffff;
+}
+
+.active>.page-link, .page-link.active {
+  z-index: 3;
+  background-color: var(--color-secondary);
+  border-color: var(--color-secondary);
+}
+
+
+.event-card {
+  padding: 1rem 0;
+}
+
+.event-card .event-date {
+  padding: 1rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  background-color: #bad8d6;
+}
+
+.event-card .event-date .day {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.event-card .event-date .date {
+  font-size: 1.75rem;
+  font-weight: 900;
+}
+
+.event-card .event-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 1.5rem;
+}
+
+.event-card .event-content .event-title {
+  font-weight: 600;
+  font-size: 1.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.event-card .event-content .event-desc {
+  font-size: 1rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  /* Number of lines */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 0.25rem;
+}
+
+.event-card .event-content .calendar-date {
+  color: var(--color-secondary-text);
+}

@@ -1,0 +1,33 @@
+{% extends "account/base.html" %} {% load static %} {% load i18n %} 
+
+{% load allauth %} {% block head_title %} {% trans "Sign Up Closed" %} 
+
+{% endblock head_title %} 
+
+{% block content %}
+<div class="row vh-100">
+  <div class="d-none col-md-7 filler-space d-md-table h-100">
+    <div class="d-table-cell align-middle px-6">
+      <img class="logo" src="{% static 'images/logo.webp'%}" alt="" />
+        <a href="/" class="logo-name">
+            <div class="title">Wobot.ai<br></div>
+            <div class="sub-title">QueueVision</div>
+        </a>
+    </div>
+  </div>
+  <div class="card col-md-5 form-space d-table h-100 mb-0">
+    <div class="card-body d-table-cell align-middle text-center">
+      <div class="mb-4">
+        <i class="fas fa-exclamation-triangle fa-4x text-warning"></i>
+      </div>
+      <h2>Sign Up Closed</h2>
+      <p class="lead mt-3">
+        We are sorry, but the sign up is currently closed.
+      </p>
+      <a class="btn btn-primary mt-4" href="{% url 'account_login' %}">
+        Go to Login Page <i class="fa-solid fa-arrow-right ms-2"></i>
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock content %}

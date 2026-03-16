@@ -1,0 +1,559 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block head_title %}Select ROI — detecter{% endblock head_title %}
+
+{% block page_title %}Select Region of Interest{% endblock page_title %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{% url 'detecter:upload' %}">detecter</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Select ROI</li>
+  </ol>
+</nav>
+{% endblock breadcrumbs %}
+
+{% block styles %}
+<style>
+  .roi-wrapper {
+    position: relative;
+    display: inline-block;
+    line-height: 0;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #000;
+  }
+  .roi-wrapper video {
+    width: 100%;
+    max-height: 70vh;
+    display: block;
+    border-radius: 8px;
+  }
+  .roi-wrapper canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+  }
+  .roi-wrapper.mode-rect   { cursor: crosshair; }
+  .roi-wrapper.mode-polygon { cursor: cell; }
+  .step-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 0.85rem;
+    margin-right: 8px;
+  }
+  .step-badge.active {
+    background: #3b7ddd;
+    color: #fff;
+  }
+  .step-badge.done {
+    background: #28a745;
+    color: #fff;
+  }
+  .roi-info {
+    font-size: 0.85rem;
+    color: #6c757d;
+  }
+  .mode-toggle .btn { font-size: 0.82rem; }
+  .mode-help { font-size: 0.78rem; color: #6c757d; }
+</style>
+{% endblock styles %}
+
+{% block content %}
+<div class="row mt-3 g-3">
+
+  <!-- Video + Canvas -->
+  <div class="col-lg-9">
+    <div class="card">
+      <div class="card-header pb-0">
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <h5 class="card-title mb-0">
+            <i class="fas fa-vector-square me-2 text-primary"></i>Draw ROI on Video
+          </h5>
+          <div class="btn-group mode-toggle" role="group">
+            <button type="button" class="btn btn-sm btn-primary active" id="modeRectBtn">
+              <i class="fas fa-vector-square me-1"></i>Rectangle
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-primary" id="modePolyBtn">
+              <i class="fas fa-draw-polygon me-1"></i>Polygon
+            </button>
+          </div>
+        </div>
+        <p class="mode-help mb-0" id="modeHelp">
+          Click and drag to draw a rectangle. You can add multiple ROI regions.
+        </p>
+      </div>
+      <div class="card-body">
+        <div class="roi-wrapper mode-rect" id="roiWrapper">
+          <video id="roiVideo" muted loop playsinline preload="auto">
+            <source src="{{ video_url }}" type="video/mp4">
+          </video>
+          <canvas id="roiCanvas"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Controls sidebar -->
+  <div class="col-lg-3">
+    <div class="card">
+      <div class="card-body">
+
+        <h6 class="fw-bold mb-3">Steps</h6>
+
+        <div class="d-flex align-items-center mb-3">
+          <span class="step-badge done">1</span>
+          <span class="text-muted"><s>Upload Video</s></span>
+        </div>
+        <div class="d-flex align-items-center mb-3">
+          <span class="step-badge active" id="step2Badge">2</span>
+          <span class="fw-semibold">Draw ROI</span>
+        </div>
+        <div class="d-flex align-items-center mb-4">
+          <span class="step-badge" id="step3Badge">3</span>
+          <span class="text-muted" id="step3Text">Start Processing</span>
+        </div>
+
+        <hr>
+
+        <div class="mb-3">
+          <div class="fw-semibold small mb-1">File</div>
+          <div class="text-muted small text-truncate">{{ job.original_filename }}</div>
+        </div>
+
+        <div class="mb-3" id="roiCoordDisplay" style="display:none;">
+          <div class="fw-semibold small mb-1">ROI Regions</div>
+          <ul class="list-unstyled mb-0" id="roiList"></ul>
+        </div>
+
+        <div class="d-flex gap-2 mt-4">
+          <button type="button" class="btn btn-outline-secondary btn-sm flex-fill" id="clearRoiBtn" disabled>
+            <i class="fas fa-eraser me-1"></i>Clear All
+          </button>
+        </div>
+
+        <form method="post" action="{% url 'detecter:start_processing' job.id %}" id="startForm" class="mt-3">
+          {% csrf_token %}
+          <input type="hidden" name="roi_regions" id="roiRegionsInput" value="[]">
+          <div class="d-grid">
+            <button type="submit" class="btn btn-success" id="startBtn" disabled>
+              <i class="fas fa-play me-2"></i>Start Processing
+            </button>
+          </div>
+        </form>
+
+        <div class="mt-3 text-center">
+          <a href="{% url 'detecter:upload' %}" class="text-muted small">
+            <i class="fas fa-arrow-left me-1"></i>Re-upload
+          </a>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock content %}
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const video   = document.getElementById("roiVideo");
+  const canvas  = document.getElementById("roiCanvas");
+  const ctx     = canvas.getContext("2d");
+  const wrapper = document.getElementById("roiWrapper");
+
+  const startBtn   = document.getElementById("startBtn");
+  const clearBtn   = document.getElementById("clearRoiBtn");
+  const coordDisp  = document.getElementById("roiCoordDisplay");
+  const roiList    = document.getElementById("roiList");
+  const step2Badge = document.getElementById("step2Badge");
+  const step3Badge = document.getElementById("step3Badge");
+  const hiddenInput = document.getElementById("roiRegionsInput");
+  const modeHelp   = document.getElementById("modeHelp");
+  const modeRectBtn = document.getElementById("modeRectBtn");
+  const modePolyBtn = document.getElementById("modePolyBtn");
+
+  const ROI_COLORS = [
+    "#ffe600", "#00e676", "#ffa726", "#ff69b4",
+    "#00bfff", "#9370db", "#40e0d0", "#ff6347",
+  ];
+
+  // ── State ─────────────────────────────────────────────────
+  let mode = "rect";          // "rect" | "polygon"
+  let regions = [];           // [{type:"rect", x1,y1,x2,y2}, {type:"polygon", points:[[x,y],...]}]
+
+  // Rectangle state
+  let rectDrawing = false;
+  let rectSX = 0, rectSY = 0, rectEX = 0, rectEY = 0;
+
+  // Polygon state
+  let polyPoints = [];       // canvas coords while drawing
+  let polyMousePos = null;   // current mouse pos for preview line
+
+  let videoW = 0, videoH = 0;
+
+  video.addEventListener("loadedmetadata", function () {
+    videoW = video.videoWidth;
+    videoH = video.videoHeight;
+    resizeCanvas();
+    video.play();
+  });
+
+  function resizeCanvas() {
+    canvas.width  = video.clientWidth;
+    canvas.height = video.clientHeight;
+    drawAll();
+  }
+  window.addEventListener("resize", resizeCanvas);
+  new ResizeObserver(resizeCanvas).observe(video);
+
+  // ── Mode switching ────────────────────────────────────────
+  modeRectBtn.addEventListener("click", function () {
+    if (mode === "rect") return;
+    cancelPolyInProgress();
+    mode = "rect";
+    modeRectBtn.classList.replace("btn-outline-primary", "btn-primary");
+    modeRectBtn.classList.add("active");
+    modePolyBtn.classList.replace("btn-primary", "btn-outline-primary");
+    modePolyBtn.classList.remove("active");
+    wrapper.classList.replace("mode-polygon", "mode-rect");
+    modeHelp.textContent = "Click and drag to draw a rectangle. You can add multiple ROI regions.";
+    drawAll();
+  });
+
+  modePolyBtn.addEventListener("click", function () {
+    if (mode === "polygon") return;
+    mode = "polygon";
+    modePolyBtn.classList.replace("btn-outline-primary", "btn-primary");
+    modePolyBtn.classList.add("active");
+    modeRectBtn.classList.replace("btn-primary", "btn-outline-primary");
+    modeRectBtn.classList.remove("active");
+    wrapper.classList.replace("mode-rect", "mode-polygon");
+    modeHelp.textContent = "Click to add vertices. Double-click or click near the first point to close the polygon.";
+    drawAll();
+  });
+
+  function cancelPolyInProgress() {
+    polyPoints = [];
+    polyMousePos = null;
+  }
+
+  // ── Coordinate helpers ────────────────────────────────────
+  function canvasToVideo(cx, cy) {
+    return [Math.round(cx * videoW / canvas.width), Math.round(cy * videoH / canvas.height)];
+  }
+  function videoToCanvas(vx, vy) {
+    return [vx * canvas.width / videoW, vy * canvas.height / videoH];
+  }
+  function canvasPos(e) {
+    var r = canvas.getBoundingClientRect();
+    var src = e.touches ? e.touches[0] : e;
+    return [src.clientX - r.left, src.clientY - r.top];
+  }
+  function dist(a, b) {
+    return Math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2);
+  }
+
+  // ── Canvas events ─────────────────────────────────────────
+  canvas.addEventListener("mousedown", function (e) {
+    if (mode === "rect") {
+      rectDrawing = true;
+      var p = canvasPos(e);
+      rectSX = p[0]; rectSY = p[1];
+    }
+  });
+
+  canvas.addEventListener("mousemove", function (e) {
+    var p = canvasPos(e);
+    if (mode === "rect" && rectDrawing) {
+      rectEX = p[0]; rectEY = p[1];
+      drawAll({ rectTemp: [rectSX, rectSY, rectEX, rectEY] });
+    } else if (mode === "polygon" && polyPoints.length > 0) {
+      polyMousePos = p;
+      drawAll({ polyPreview: true });
+    }
+  });
+
+  canvas.addEventListener("mouseup", function (e) {
+    if (mode === "rect" && rectDrawing) {
+      rectDrawing = false;
+      var p = canvasPos(e);
+      rectEX = p[0]; rectEY = p[1];
+      finaliseRect();
+    }
+  });
+
+  canvas.addEventListener("click", function (e) {
+    if (mode !== "polygon") return;
+    var p = canvasPos(e);
+    // Close polygon if clicking near first point
+    if (polyPoints.length >= 3 && dist(p, polyPoints[0]) < 15) {
+      finalisePolygon();
+      return;
+    }
+    polyPoints.push(p);
+    drawAll({ polyPreview: true });
+  });
+
+  canvas.addEventListener("dblclick", function (e) {
+    if (mode !== "polygon") return;
+    e.preventDefault();
+    if (polyPoints.length >= 3) {
+      finalisePolygon();
+    }
+  });
+
+  // ── Touch events ──────────────────────────────────────────
+  canvas.addEventListener("touchstart", function (e) {
+    e.preventDefault();
+    if (mode === "rect") {
+      rectDrawing = true;
+      var p = canvasPos(e);
+      rectSX = p[0]; rectSY = p[1];
+    } else if (mode === "polygon") {
+      var p = canvasPos(e);
+      if (polyPoints.length >= 3 && dist(p, polyPoints[0]) < 25) {
+        finalisePolygon();
+        return;
+      }
+      polyPoints.push(p);
+      drawAll({ polyPreview: true });
+    }
+  }, { passive: false });
+
+  canvas.addEventListener("touchmove", function (e) {
+    if (mode === "rect" && rectDrawing) {
+      e.preventDefault();
+      var p = canvasPos(e);
+      rectEX = p[0]; rectEY = p[1];
+      drawAll({ rectTemp: [rectSX, rectSY, rectEX, rectEY] });
+    }
+  }, { passive: false });
+
+  canvas.addEventListener("touchend", function (e) {
+    if (mode === "rect" && rectDrawing) {
+      rectDrawing = false;
+      finaliseRect();
+    }
+  });
+
+  // Escape key cancels in-progress polygon
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && mode === "polygon" && polyPoints.length > 0) {
+      cancelPolyInProgress();
+      drawAll();
+    }
+  });
+
+  // ── Finalise helpers ──────────────────────────────────────
+  function finaliseRect() {
+    if (Math.abs(rectEX - rectSX) < 20 || Math.abs(rectEY - rectSY) < 20) {
+      drawAll();
+      return;
+    }
+    var p1 = canvasToVideo(Math.min(rectSX, rectEX), Math.min(rectSY, rectEY));
+    var p2 = canvasToVideo(Math.max(rectSX, rectEX), Math.max(rectSY, rectEY));
+    regions.push({ type: "rect", x1: p1[0], y1: p1[1], x2: p2[0], y2: p2[1] });
+    syncUI();
+    drawAll();
+  }
+
+  function finalisePolygon() {
+    var pts = polyPoints.map(function (p) { return canvasToVideo(p[0], p[1]); });
+    polyPoints = [];
+    polyMousePos = null;
+    if (pts.length < 3) return;
+    regions.push({ type: "polygon", points: pts });
+    syncUI();
+    drawAll();
+  }
+
+  // ── Drawing ───────────────────────────────────────────────
+  function drawSavedRect(reg, color, label) {
+    var p1 = videoToCanvas(reg.x1, reg.y1);
+    var p2 = videoToCanvas(reg.x2, reg.y2);
+    var x = p1[0], y = p1[1], w = p2[0] - p1[0], h = p2[1] - p1[1];
+    ctx.fillStyle = color + "26";
+    ctx.fillRect(x, y, w, h);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 4]);
+    ctx.strokeRect(x, y, w, h);
+    ctx.setLineDash([]);
+    // Corners
+    var cs = 10;
+    ctx.fillStyle = color;
+    [[x, y], [x + w, y], [x, y + h], [x + w, y + h]].forEach(function (pt) {
+      ctx.fillRect(pt[0] - cs / 2, pt[1] - cs / 2, cs, cs);
+    });
+    drawLabel(label, color, x, y);
+  }
+
+  function drawSavedPolygon(reg, color, label) {
+    var cpts = reg.points.map(function (p) { return videoToCanvas(p[0], p[1]); });
+    // Fill
+    ctx.fillStyle = color + "26";
+    ctx.beginPath();
+    ctx.moveTo(cpts[0][0], cpts[0][1]);
+    for (var j = 1; j < cpts.length; j++) ctx.lineTo(cpts[j][0], cpts[j][1]);
+    ctx.closePath();
+    ctx.fill();
+    // Stroke
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 4]);
+    ctx.beginPath();
+    ctx.moveTo(cpts[0][0], cpts[0][1]);
+    for (var j = 1; j < cpts.length; j++) ctx.lineTo(cpts[j][0], cpts[j][1]);
+    ctx.closePath();
+    ctx.stroke();
+    ctx.setLineDash([]);
+    // Vertices
+    ctx.fillStyle = color;
+    cpts.forEach(function (pt) {
+      ctx.beginPath();
+      ctx.arc(pt[0], pt[1], 5, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    drawLabel(label, color, cpts[0][0], cpts[0][1]);
+  }
+
+  function drawLabel(label, color, x, y) {
+    ctx.fillStyle = color;
+    ctx.font = "bold 13px sans-serif";
+    ctx.fillText(label, x + 6, y > 20 ? y - 6 : y + 16);
+  }
+
+  function drawAll(opts) {
+    opts = opts || {};
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Saved regions
+    regions.forEach(function (reg, i) {
+      var color = ROI_COLORS[i % ROI_COLORS.length];
+      var label = "ROI " + (i + 1);
+      if (reg.type === "polygon") {
+        drawSavedPolygon(reg, color, label);
+      } else {
+        drawSavedRect(reg, color, label);
+      }
+    });
+
+    // Temp rectangle while dragging
+    if (opts.rectTemp) {
+      var t = opts.rectTemp;
+      var color = ROI_COLORS[regions.length % ROI_COLORS.length];
+      var x = Math.min(t[0], t[2]), y = Math.min(t[1], t[3]);
+      var w = Math.abs(t[2] - t[0]), h = Math.abs(t[3] - t[1]);
+      ctx.fillStyle = color + "26";
+      ctx.fillRect(x, y, w, h);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6, 4]);
+      ctx.strokeRect(x, y, w, h);
+      ctx.setLineDash([]);
+    }
+
+    // In-progress polygon
+    if (polyPoints.length > 0) {
+      var color = ROI_COLORS[regions.length % ROI_COLORS.length];
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(polyPoints[0][0], polyPoints[0][1]);
+      for (var j = 1; j < polyPoints.length; j++) {
+        ctx.lineTo(polyPoints[j][0], polyPoints[j][1]);
+      }
+      if (polyMousePos) {
+        ctx.lineTo(polyMousePos[0], polyMousePos[1]);
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
+      // Dots on placed vertices
+      ctx.fillStyle = color;
+      polyPoints.forEach(function (pt, j) {
+        ctx.beginPath();
+        ctx.arc(pt[0], pt[1], j === 0 ? 7 : 5, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      // Highlight first vertex (close target)
+      if (polyPoints.length >= 3) {
+        ctx.strokeStyle = "#fff";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(polyPoints[0][0], polyPoints[0][1], 10, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+  }
+
+  // ── Remove / Clear ────────────────────────────────────────
+  function removeROI(idx) {
+    regions.splice(idx, 1);
+    syncUI();
+    drawAll();
+  }
+
+  function syncUI() {
+    hiddenInput.value = JSON.stringify(regions);
+    roiList.innerHTML = "";
+    regions.forEach(function (reg, i) {
+      var color = ROI_COLORS[i % ROI_COLORS.length];
+      var li = document.createElement("li");
+      li.className = "d-flex align-items-center justify-content-between mb-1";
+      var desc = "";
+      if (reg.type === "polygon") {
+        desc = "Polygon (" + reg.points.length + " pts)";
+      } else {
+        desc = "Rect (" + reg.x1 + "," + reg.y1 + ")\u2192(" + reg.x2 + "," + reg.y2 + ")";
+      }
+      li.innerHTML =
+        '<span class="roi-info">' +
+          '<span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:' + color + ';margin-right:5px;"></span>' +
+          'ROI ' + (i + 1) + ': ' + desc +
+        '</span>' +
+        '<button type="button" class="btn btn-link btn-sm text-danger p-0 ms-2 roi-del-btn" data-idx="' + i + '" title="Remove">' +
+          '<i class="fas fa-times"></i>' +
+        '</button>';
+      roiList.appendChild(li);
+    });
+    roiList.querySelectorAll(".roi-del-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        removeROI(parseInt(this.dataset.idx, 10));
+      });
+    });
+    var hasAny = regions.length > 0;
+    coordDisp.style.display = hasAny ? "block" : "none";
+    startBtn.disabled = !hasAny;
+    clearBtn.disabled = !hasAny;
+    if (hasAny) {
+      step2Badge.classList.remove("active");
+      step2Badge.classList.add("done");
+      step3Badge.classList.add("active");
+    } else {
+      step2Badge.classList.add("active");
+      step2Badge.classList.remove("done");
+      step3Badge.classList.remove("active");
+    }
+  }
+
+  clearBtn.addEventListener("click", function () {
+    regions = [];
+    cancelPolyInProgress();
+    syncUI();
+    drawAll();
+  });
+});
+</script>
+{% endblock scripts %}

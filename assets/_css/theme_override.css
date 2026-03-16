@@ -1,0 +1,215 @@
+/* 
+ * Custom Theme Override for QueueVision
+ * Professional Greenery Theme
+ */
+
+:root,
+[data-bs-theme="light"] {
+  /* Primary - Emerald Green */
+  --bs-primary: #16a34a;
+  --bs-primary-rgb: 22, 163, 74;
+  --bs-primary-text-emphasis: #166534;
+  --bs-primary-bg-subtle: #dcfce7;
+  --bs-primary-border-subtle: #86efac;
+
+  /* Secondary - Slate Gray */
+  --bs-secondary: #64748b;
+  --bs-secondary-rgb: 100, 116, 139;
+
+  /* Success */
+  --bs-success: #16a34a;
+  --bs-success-rgb: 22, 163, 74;
+
+  /* Info - Sky Blue */
+  --bs-info: #0284c7;
+  --bs-info-rgb: 2, 132, 199;
+
+  /* Warning */
+  --bs-warning: #d97706;
+  --bs-warning-rgb: 217, 119, 6;
+
+  /* Danger */
+  --bs-danger: #dc2626;
+  --bs-danger-rgb: 220, 38, 38;
+
+  /* Link colors */
+  --bs-link-color: #16a34a;
+  --bs-link-color-rgb: 22, 163, 74;
+  --bs-link-hover-color: #15803d;
+  --bs-link-hover-color-rgb: 21, 128, 61;
+}
+
+/* Override Bootstrap primary button */
+.btn-primary {
+  --bs-btn-bg: #16a34a;
+  --bs-btn-border-color: #16a34a;
+  --bs-btn-hover-bg: #15803d;
+  --bs-btn-hover-border-color: #166534;
+  --bs-btn-active-bg: #166534;
+  --bs-btn-active-border-color: #14532d;
+  --bs-btn-disabled-bg: #16a34a;
+  --bs-btn-disabled-border-color: #16a34a;
+}
+
+.btn-outline-primary {
+  --bs-btn-color: #16a34a;
+  --bs-btn-border-color: #16a34a;
+  --bs-btn-hover-bg: #16a34a;
+  --bs-btn-hover-border-color: #16a34a;
+  --bs-btn-active-bg: #15803d;
+  --bs-btn-active-border-color: #15803d;
+}
+
+/* Focus ring color */
+.form-control:focus,
+.form-select:focus {
+  border-color: #86efac;
+  box-shadow: 0 0 0 0.25rem rgba(22, 163, 74, 0.25);
+}
+
+/* Sidebar Customization - Dark Professional */
+.sidebar {
+  background: #1f2937 !important;
+  border-right: 1px solid #374151 !important;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+.sidebar-content {
+  background: #1f2937 !important;
+}
+
+.sidebar-brand {
+  color: #16a34a !important;
+  font-weight: 700;
+}
+
+.sidebar-header {
+  color: #ffffff !important;
+}
+
+.sidebar-link,
+a.sidebar-link {
+  background: transparent !important;
+  color: #ffffff !important;
+  transition: all 0.2s ease;
+}
+
+.sidebar-link:hover,
+a.sidebar-link:hover {
+  color: #86efac !important;
+  background: rgba(34, 197, 94, 0.15) !important;
+}
+
+.sidebar-item.active > .sidebar-link,
+.sidebar-item.active > a.sidebar-link {
+  color: #ffffff !important;
+  background: rgba(22, 163, 74, 0.2) !important;
+  border-left: 3px solid #16a34a !important;
+  font-weight: 500;
+}
+
+.sidebar-link i,
+.sidebar-link svg {
+  color: #9ca3af;
+}
+
+.sidebar-link:hover i,
+.sidebar-link:hover svg,
+.sidebar-item.active > .sidebar-link i,
+.sidebar-item.active > .sidebar-link svg {
+  color: #16a34a !important;
+}
+
+.sidebar-header {
+  color: #9ca3af !important;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+/* Navbar */
+.navbar-bg {
+  background-color: #fff;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+/* Cards */
+.card {
+  border: none;
+  box-shadow:
+    0 1px 3px 0 rgba(0, 0, 0, 0.1),
+    0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  border-radius: 0.5rem;
+}
+
+.card-header {
+  background-color: #fff;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* Tables */
+.table-dark {
+  --bs-table-bg: #0f172a;
+  --bs-table-border-color: #1e293b;
+}
+
+/* Badge primary */
+.badge.bg-primary {
+  background-color: #16a34a !important;
+}
+
+/* Progress bars */
+.progress-bar {
+  background-color: #16a34a;
+}
+
+/* Pagination */
+.page-link {
+  color: #16a34a;
+}
+
+.page-item.active .page-link {
+  background-color: #16a34a;
+  border-color: #16a34a;
+}
+
+.page-link:hover {
+  color: #15803d;
+  background-color: #dcfce7;
+}
+
+.page-link:focus {
+  box-shadow: 0 0 0 0.25rem rgba(22, 163, 74, 0.25);
+}
+
+/* Links */
+a {
+  color: #16a34a;
+}
+
+a:hover {
+  color: #15803d;
+}
+
+/* Alert primary */
+.alert-primary {
+  --bs-alert-bg: #dcfce7;
+  --bs-alert-border-color: #86efac;
+  --bs-alert-color: #166534;
+}
+
+/* Text primary */
+.text-primary {
+  color: #16a34a !important;
+}
+
+/* Background primary */
+.bg-primary {
+  background-color: #16a34a !important;
+}
+
+/* Border primary */
+.border-primary {
+  border-color: #16a34a !important;
+}

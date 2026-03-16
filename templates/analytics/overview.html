@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block head_title %}Analytics — QueueVision{% endblock head_title %}
+
+{% block page_title %}Analytics Overview{% endblock page_title %}
+
+
+
+{% block styles %}
+<style>
+  .vid-card .card { border: none; box-shadow: 0 1px 4px rgba(0,0,0,.06); transition: transform .15s; }
+  .vid-card .card:hover { transform: translateY(-3px); box-shadow: 0 4px 14px rgba(0,0,0,.1); }
+  .vid-card .preview-wrapper { position: relative; background: #000; border-radius: 8px 8px 0 0; overflow: hidden; }
+  .vid-card video { width: 100%; display: block; max-height: 180px; object-fit: cover; }
+  .vid-card .no-preview { height: 140px; display: flex; align-items: center; justify-content: center; color: #6c757d; }
+  .vid-card .stat { font-size: .82rem; color: #6c757d; }
+  .vid-card .stat strong { color: #212529; }
+  .vid-card .video-name { font-weight: 700; font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+</style>
+{% endblock styles %}
+
+{% block content %}
+<div class="row mt-3 g-3">
+
+  {% if cards %}
+    {% for card in cards %}
+    <div class="col-sm-6 col-lg-4 col-xl-3 vid-card">
+      <div class="card h-100">
+
+        <!-- Video Preview -->
+        <div class="preview-wrapper">
+          {% if card.output_url %}
+          <video muted preload="metadata">
+            <source src="{{ card.output_url }}" type="video/mp4">
+          </video>
+          {% else %}
+          <div class="no-preview">
+            <i class="fas fa-video-slash fa-2x"></i>
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- Card Body -->
+        <div class="card-body pb-2">
+          <div class="video-name mb-2" title="{{ card.video_name }}">
+            <i class="fas fa-film me-1 text-primary"></i>{{ card.video_name }}
+          </div>
+
+          <div class="d-flex flex-wrap gap-3 mb-3">
+            <div class="">
+                <i class="fas fa-car-side me-1"></i>Vehicles: <strong>{{ card.total_vehicles }}</strong>
+            </div>
+            <div class=""><i class="fas fa-clock me-1">
+                </i>Avg Wait: <strong>{{ card.avg_wait_display }}</strong>
+            </div>
+            <div class=""><i class="fas fa-triangle-exclamation me-1">
+                </i>Peak: <strong>{{ card.peak_congestion }}</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card Footer — Buttons -->
+        <div class="card-footer bg-transparent border-top-0 pt-0">
+          <div class="d-flex flex-wrap gap-2 mb-2">
+            {% if card.output_url %}
+            <a href="{{ card.output_url }}" download class="btn btn-sm btn-outline-primary flex-fill">
+              <i class="fas fa-download me-1"></i>Output Video
+            </a>
+            {% endif %}
+            <a href="{% url 'analytics:download_csv' card.job.id %}" class="btn btn-sm btn-outline-success flex-fill">
+              <i class="fas fa-file-csv me-1"></i>CSV Report
+            </a>
+          </div>
+          <a href="{% url 'analytics:detail' card.job.id %}" class="btn btn-sm btn-primary w-100">
+            <i class="fas fa-chart-line me-1"></i>View Detailed Analytics
+          </a>
+        </div>
+
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body text-center py-5 text-muted">
+          <i class="fas fa-chart-bar fa-3x mb-3"></i>
+          <p class="mb-2">No processed videos yet.</p>
+          <a href="{% url 'detecter:upload' %}" class="btn btn-primary btn-sm">
+            <i class="fas fa-plus me-1"></i>Process a Video
+          </a>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock content %}

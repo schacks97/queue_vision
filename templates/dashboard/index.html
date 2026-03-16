@@ -1,0 +1,327 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block head_title %}Dashboard — QueueVision{% endblock head_title %}
+
+{% block page_title %}Dashboard{% endblock page_title %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item active" aria-current="page">Dashboard</li>
+  </ol>
+</nav>
+{% endblock breadcrumbs %}
+
+{% block styles %}
+<style>
+  .stat-card .icon-box {
+    width: 52px; height: 52px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.25rem;
+  }
+  .stat-card .stat-value {
+    font-size: 1.6rem; font-weight: 700; line-height: 1.2;
+  }
+  .stat-card .stat-label {
+    font-size: 0.82rem; color: #6c757d;
+  }
+  .config-label {
+    font-size: 0.82rem; font-weight: 600; color: #495057;
+    margin-bottom: 4px;
+  }
+  .config-value {
+    font-size: 0.95rem; font-weight: 500;
+  }
+  .obj-table th {
+    font-size: 0.78rem; text-transform: uppercase;
+    letter-spacing: 0.5px; color: #6c757d;
+  }
+  .card { border: none; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+  .card-header { background: transparent; border-bottom: 1px solid #eee; }
+</style>
+{% endblock styles %}
+
+{% block content %}
+<div class="row mt-3 g-3">
+
+  <!-- ════════════════════════════════════════════════════════
+       Block 1 — System Analytics Summary
+       ════════════════════════════════════════════════════════ -->
+  <div class="col-12">
+    <div class="row g-3">
+
+      <!-- Total Videos -->
+      <div class="col-6 col-lg-3">
+        <div class="card stat-card h-100">
+          <div class="card-body d-flex align-items-center gap-3">
+            <div class="icon-box bg-primary bg-opacity-10 text-primary">
+              <i class="fas fa-video"></i>
+            </div>
+            <div>
+              <div class="stat-value">{{ analytics.total_videos }}</div>
+              <div class="stat-label">Videos Processed</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Total Vehicles -->
+      <div class="col-6 col-lg-3">
+        <div class="card stat-card h-100">
+          <div class="card-body d-flex align-items-center gap-3">
+            <div class="icon-box bg-success bg-opacity-10 text-success">
+              <i class="fas fa-car-side"></i>
+            </div>
+            <div>
+              <div class="stat-value">{{ analytics.total_vehicles }}</div>
+              <div class="stat-label">Vehicles Detected</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Average Wait -->
+      <div class="col-6 col-lg-3">
+        <div class="card stat-card h-100">
+          <div class="card-body d-flex align-items-center gap-3">
+            <div class="icon-box bg-warning bg-opacity-10 text-warning">
+              <i class="fas fa-clock"></i>
+            </div>
+            <div>
+              <div class="stat-value">{{ analytics.avg_wait_display }}</div>
+              <div class="stat-label">Avg Wait Time</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Highest Congestion -->
+      <div class="col-6 col-lg-3">
+        <div class="card stat-card h-100">
+          <div class="card-body d-flex align-items-center gap-3">
+            <div class="icon-box bg-danger bg-opacity-10 text-danger">
+              <i class="fas fa-triangle-exclamation"></i>
+            </div>
+            <div>
+              <div class="stat-value text-truncate" style="max-width:160px;" title="{{ analytics.highest_congestion }}">
+                {{ analytics.highest_congestion }}
+              </div>
+              <div class="stat-label">Highest Congestion</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════
+       Block 2 — Pipeline Configuration (Model + Input + Objects)
+       ════════════════════════════════════════════════════════ -->
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header d-flex align-items-center justify-content-between py-3">
+        <div class="d-flex align-items-center gap-2">
+          <i class="fas fa-cogs text-primary"></i>
+          <h6 class="mb-0 fw-bold">Pipeline Configuration</h6>
+        </div>
+        <div>
+          <span id="saveStatus" class="text-success me-2" style="display:none; font-size:.82rem;">
+            <i class="fas fa-check-circle"></i> Saved
+          </span>
+          <button id="saveConfigBtn" class="btn btn-primary btn-sm px-4">
+            <i class="fas fa-save me-1"></i>Save
+          </button>
+        </div>
+      </div>
+      <div class="card-body">
+
+        <!-- ── Model Selection ── -->
+        <h6 class="fw-bold text-muted mb-3" style="font-size:.8rem; text-transform:uppercase; letter-spacing:.5px;">
+          <i class="fas fa-brain me-1"></i>Model
+        </h6>
+        <div class="mb-3">
+          <div class="config-label">Current Model</div>
+          <div class="config-value">
+            <span id="currentModelBadge" class="badge bg-primary bg-opacity-10 px-3 py-2 text-white" style="font-size:.9rem;">
+              <i class="fas fa-microchip me-1"></i>{{ model_config.current_model }}
+            </span>
+          </div>
+        </div>
+        <div class="row g-3 mb-4">
+          <div class="col-sm-6">
+            <label for="modelFamilySelect" class="config-label">Model Family</label>
+            <select id="modelFamilySelect" class="form-select">
+              {% for fam in model_config.available_models %}
+              <option value="{{ fam.id }}">{{ fam.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-sm-6">
+            <label for="modelVariantSelect" class="config-label">Model Variant</label>
+            <select id="modelVariantSelect" class="form-select"></select>
+          </div>
+        </div>
+
+        <hr class="my-3">
+
+        <!-- ── Input Configuration ── -->
+        <h6 class="fw-bold text-muted mb-3" style="font-size:.8rem; text-transform:uppercase; letter-spacing:.5px;">
+          <i class="fas fa-sliders me-1"></i>Input
+        </h6>
+        <div class="row g-3 mb-4">
+          <div class="col-sm-6">
+            <label class="config-label" for="inputSize">Input Size</label>
+            <input type="text" id="inputSize" class="form-control" value="{{ input_config.input_size }}">
+          </div>
+          <div class="col-sm-6">
+            <label class="config-label" for="outputSize">Output Size</label>
+            <input type="text" id="outputSize" class="form-control" value="{{ input_config.output_size }}">
+          </div>
+          <div class="col-12">
+            <label class="config-label" for="confidenceRange">
+              Confidence Threshold: <span id="confVal" class="text-primary fw-bold">{{ input_config.confidence }}</span>
+            </label>
+            <input type="range" class="form-range" id="confidenceRange"
+                   min="0.1" max="1.0" step="0.05" value="{{ input_config.confidence }}">
+          </div>
+        </div>
+
+        <hr class="my-3">
+
+        <!-- ── Object Selection ── -->
+        <h6 class="fw-bold text-muted mb-3" style="font-size:.8rem; text-transform:uppercase; letter-spacing:.5px;">
+          <i class="fas fa-list-check me-1"></i>Object Selection
+        </h6>
+        <div class="table-responsive">
+          <table class="table table-hover obj-table mb-0">
+            <thead>
+              <tr>
+                <th style="width:60px;">Enable</th>
+                <th style="width:100px;">Object ID</th>
+                <th>Object Name</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for obj in detection_objects %}
+              <tr>
+                <td>
+                  <div class="form-check">
+                    <input class="form-check-input obj-checkbox" type="checkbox"
+                           id="obj_{{ obj.id }}" value="{{ obj.id }}"
+                           {% if obj.enabled %}checked{% endif %}>
+                  </div>
+                </td>
+                <td class="fw-semibold">{{ obj.id }}</td>
+                <td>{{ obj.name }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock content %}
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  // ── Confidence slider (live label update)
+  var slider = document.getElementById("confidenceRange");
+  var label  = document.getElementById("confVal");
+  if (slider && label) {
+    slider.addEventListener("input", function () {
+      label.textContent = parseFloat(this.value).toFixed(2);
+    });
+  }
+
+  // ── Model family → variant dynamic dropdown
+  var modelsData = [
+    {% for fam in model_config.available_models %}
+    { id: "{{ fam.id }}", variants: [
+      {% for v in fam.variants %}{ id: "{{ v.id }}", name: "{{ v.name }}" },{% endfor %}
+    ]},
+    {% endfor %}
+  ];
+
+  var currentModel = "{{ model_config.current_model }}";
+  var familySelect  = document.getElementById("modelFamilySelect");
+  var variantSelect = document.getElementById("modelVariantSelect");
+  var badge = document.getElementById("currentModelBadge");
+
+  function populateVariants(familyId) {
+    variantSelect.innerHTML = "";
+    var fam = modelsData.find(function(f){ return f.id === familyId; });
+    if (!fam) return;
+    fam.variants.forEach(function(v) {
+      var opt = document.createElement("option");
+      opt.value = v.id;
+      opt.textContent = v.name;
+      if (v.id === currentModel) opt.selected = true;
+      variantSelect.appendChild(opt);
+    });
+  }
+
+  // Auto-select the family that contains the current model
+  var initFamily = modelsData[0] ? modelsData[0].id : "";
+  modelsData.forEach(function(fam) {
+    fam.variants.forEach(function(v) {
+      if (v.id === currentModel) initFamily = fam.id;
+    });
+  });
+  familySelect.value = initFamily;
+  populateVariants(initFamily);
+
+  familySelect.addEventListener("change", function () {
+    populateVariants(this.value);
+    badge.innerHTML = '<i class="fas fa-microchip me-1"></i>' + variantSelect.value;
+  });
+
+  variantSelect.addEventListener("change", function () {
+    badge.innerHTML = '<i class="fas fa-microchip me-1"></i>' + this.value;
+  });
+
+  // ── Save button
+  function getCookie(name) {
+    var v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+    return v ? v.pop() : '';
+  }
+
+  document.getElementById("saveConfigBtn").addEventListener("click", function () {
+    var selected_classes = [];
+    document.querySelectorAll('.obj-checkbox:checked').forEach(function(c) {
+      selected_classes.push(parseInt(c.value));
+    });
+
+    var payload = {
+      detecter_model: variantSelect.value,
+      detecter_confidence: parseFloat(slider.value),
+      detection_classes: selected_classes
+    };
+
+    fetch("{% url 'dashboard:save_config' %}", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken")
+      },
+      body: JSON.stringify(payload)
+    }).then(function(resp) {
+      if (resp.ok) {
+        var status = document.getElementById("saveStatus");
+        status.style.display = "inline";
+        setTimeout(function(){ status.style.display = "none"; }, 2000);
+      }
+    });
+  });
+});
+</script>
+{% endblock scripts %}
+</script>
+

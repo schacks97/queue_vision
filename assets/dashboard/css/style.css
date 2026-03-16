@@ -1,0 +1,115 @@
+.sidebar, .sidebar-content, .sidebar-link, a.sidebar-link {
+  background: var(--color-primary);
+}
+
+a.sidebar-link:hover {
+  background: var(--color-primary-hover);
+  color: #e9ecef;
+}
+
+.sidebar-item.active .sidebar-link:hover, .sidebar-item.active>.sidebar-link {
+  background: #003861;
+  border-left-color: var(--color-secondary);
+  color: #e9ecef;
+}
+
+a, .link-btn {
+  color: var(--color-secondary);
+  text-decoration: none;
+}
+
+.btn-primary {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.btn-primary:hover {
+  background-color: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+}
+
+
+.btn-outline-primary {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.btn-outline-primary:hover  {
+  border-color: var(--color-secondary);
+  background-color: var(--color-secondary);
+}
+
+
+
+/* table */
+.table.daily-reflections td {
+  vertical-align: baseline;
+}
+
+/* table */
+
+
+/* CK Editor Height */
+.ck.ck-content.ck-editor__editable {
+  min-height: 150px !important;
+}
+
+
+.hero-image {
+  object-fit: cover;
+}
+
+
+.image-form-preview {
+  width: 100%;
+  height: 13rem;
+  object-fit: cover;
+}
+
+
+.form-label {
+  font-weight: 700;
+  color: #6a6a6a;
+}
+
+.page-preview-img {
+  width: 20rem;
+  height: 13rem;
+  float: right;
+  object-fit: cover;
+}
+
+th {
+  font-size: 0.75rem !important;
+  color: #6a6a6a !important;
+}
+
+.dropdown-menu {
+  margin-top: 2rem !important;
+}
+
+.dropdown-width-lg {
+  width: 13.5rem;
+}
+
+.dropdown-width-xl {
+  width: 20rem;
+}
+
+
+.section-image {
+  width: 100%;
+  height: 15rem;
+  object-fit: cover;
+}
+
+/* Make sidebar scrollable */
+.sidebar-content {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.sidebar-nav {
+  overflow-y: auto;
+  overflow-x: hidden;
+}

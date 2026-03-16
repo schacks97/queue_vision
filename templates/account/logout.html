@@ -1,0 +1,63 @@
+{% extends "account/base.html" %} {% load static %} {% load i18n %} 
+
+{% block head_title %}{% trans "Sign Out" %}{% endblock head_title %} 
+
+{% block content %}
+<div class="row vh-100">
+  <div class="d-none col-md-7 filler-space d-md-table h-100">
+    <div class="d-table-cell align-middle px-6">
+        <a href="/" class="logo-name">
+            <div class="title">Wobot.ai<br></div>
+            <div class="sub-title">QueueVision</div>
+        </a>
+    </div>
+  </div>
+  <div class="card col-md-5 form-space d-table h-100 mb-0">
+    <div class="card-body d-table-cell align-middle">
+      <div class="text-center mt-4">
+        <div class="mb-4">
+          <i class="fas fa-sign-out-alt fa-4x text-warning"></i>
+        </div>
+        <h1>{% trans "Sign Out" %}</h1>
+        <p class="lead">
+          {% trans 'Are you sure you want to sign out?' %}
+        </p>
+      </div>
+
+      <form method="post" action="{% url 'account_logout' %}">
+        {% csrf_token %}
+        <div class="d-grid gap-2 mt-4">
+          <button type="submit" class="btn btn-danger btn-lg">
+            <i class="fas fa-sign-out-alt me-2"></i>{% trans 'Yes, Sign Me Out' %}
+          </button>
+          <a
+            href="{% url 'dashboard:index' %}"
+            class="btn btn-outline-secondary btn-lg"
+          >
+            <i class="fas fa-arrow-left me-2"></i>{% trans 'No, Take Me Back' %}
+          </a>
+        </div>
+      </form>
+
+      <div class="text-center mt-4">
+        <p class="text-muted">
+          <i class="fas fa-info-circle me-1"></i>
+          {% trans 'You can always log back in anytime.' %}
+        </p>
+      </div>
+
+      {% if messages %}
+      <div class="mt-4">
+        {% for message in messages %}
+        <div
+          class="alert {% if message.tags == 'success' %}alert-success{% elif message.tags == 'error' %}alert-danger{% else %}alert-info{% endif %}"
+        >
+          {{ message }}
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock content %}

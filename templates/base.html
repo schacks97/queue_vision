@@ -1,0 +1,91 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+	<title>{% block head_title %}{% endblock head_title %}</title>
+
+	<!-- Favicons -->
+	<link href="{% static 'favicon.ico' %}" rel="icon">
+	<link href="{% static 'favicon.ico' %}" rel="apple-touch-icon">
+
+	<!-- Bootstrap Core -->
+	<link href="{% static '_css/bootstrap/bootstrap.min.css' %}" rel="stylesheet">
+
+	<!-- Font -->
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+
+	<!-- Font Awesome -->
+	<link href="{% static 'fontawesomefree/css/all.css' %}" rel="stylesheet" type="text/css">
+
+	<!-- Theme CSS -->
+	<link href="{% static 'dashboard/css/theme.css' %}" rel="stylesheet">
+
+	<!-- Custom CSS -->
+	<link href="{% static '_css/main.css' %}" rel="stylesheet">
+	<link href="{% static '_css/theme_override.css' %}" rel="stylesheet">
+	<link href="{% static 'dashboard/css/style.css' %}" rel="stylesheet">
+
+	{% block styles %}{% endblock styles %}
+</head>
+
+<body>
+	{% include "_partials/_snackbar.html" %}
+
+	<div class="wrapper">
+		{% include "_partials/_sidebar.html" %}
+
+		<div class="main">
+			{% include "_partials/_navbar.html" %}
+
+			<main class="content">
+				<div class="container-fluid p-0">
+
+					<div class="d-flex align-items-center justify-content-between">
+						<div>
+							<h3>{% block page_title %}{% endblock page_title %}</h3>
+							{% block breadcrumbs %}
+							<nav
+								style="--bs-breadcrumb-divider: url(&#34;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Cpath d='M2.5 0L1 1.5 3.5 4 1 6.5 2.5 8l4-4-4-4z' fill='%236c757d'/%3E%3C/svg%3E&#34;);"
+								aria-label="breadcrumb">
+							</nav>
+							{% endblock breadcrumbs %}
+						</div>
+						{% if preview_url %}
+						<div>
+							<a href="{{ preview_url }}" class="btn btn-info" target="_blank"><i class="fa-solid fa-eye me-2"></i>Preview</a>
+						</div>
+						{% endif %}
+					</div>
+
+					{% block content %}{% endblock content %}
+					
+				</div>
+
+			</main>
+
+		</div>
+	</div>
+
+	<script defer src="{% static '_js/jquery.min.js' %}"></script>
+
+	<!-- Custom JS -->
+	<script defer src="{% static 'dashboard/js/theme.js' %}"></script>
+	<script defer src="{% static 'dashboard/js/app.js' %}"></script>
+	
+	<!-- Axios for HTTP requests -->
+	<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+	
+	<!-- Marked.js for Markdown parsing -->
+	<script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
+	
+	<!-- DOMPurify for HTML sanitization -->
+	<script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.8/dist/purify.min.js"></script>
+	{% block scripts %}{% endblock scripts %}
+</body>
+
+</html>

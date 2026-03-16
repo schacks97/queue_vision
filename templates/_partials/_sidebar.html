@@ -1,0 +1,57 @@
+{% with namespace=request.resolver_match.namespace url_name=request.resolver_match.url_name %}
+<nav id="sidebar" class="sidebar js-sidebar">
+  <div class="sidebar-content js-simplebar">
+    <a class="sidebar-brand" href="{% url 'dashboard:index' %}">
+      <span class="align-middle">QueueVision</span>
+    </a>
+
+    <ul class="sidebar-nav">
+    
+
+      <li class="sidebar-item {% if url_name == 'index' and namespace == 'dashboard' %}active{% endif %}">
+        <a class="sidebar-link" href="{% url 'dashboard:index' %}">
+          <i class="align-middle me-2 fas fa-fw fa-tachometer-alt"></i>
+          <span>Dashboard</span>
+        </a>
+      </li>
+
+
+      <li class="sidebar-item {% if '/detecter/' in request.path %}active{% endif %}">
+          <a class="sidebar-link" href="{% url 'detecter:upload' %}">
+            <i class="align-middle me-2 fas fa-fw fa-video"></i>
+            <span>Detector</span>
+          </a>
+      </li>
+
+      <li class="sidebar-item {% if '/analytics/' in request.path %}active{% endif %}">
+          <a class="sidebar-link" href="{% url 'analytics:overview' %}">
+            <i class="align-middle me-2 fas fa-fw fa-chart-bar"></i>
+            <span>Analytics</span>
+          </a>
+      </li>
+
+      <li class="sidebar-item {% if '/assistant/' in request.path %}active{% endif %}">
+          <a class="sidebar-link" href="{% url 'ai_assistent:chat_page' %}">
+            <i class="align-middle me-2 fas fa-fw fa-robot"></i>
+            <span>AI Assistant</span>
+          </a>
+      </li>
+
+      <li class="sidebar-item {% if 'model-optimization' in request.path %}active{% endif %}">
+          <a class="sidebar-link" href="{% url 'dashboard:model_optimization' %}">
+            <i class="align-middle me-2 fas fa-fw fa-bolt"></i>
+            <span>Model Optimization</span>
+          </a>
+      </li>
+
+      <li class="sidebar-item {% if '/user/users/' in request.path %}active{% endif %}">
+          <a class="sidebar-link" href="{% url 'user:user_list' %}">
+            <i class="align-middle me-2 fas fa-fw fa-users"></i>
+            <span>Users</span>
+          </a>
+      </li>
+
+    </ul>
+  </div>
+</nav>
+{% endwith %}

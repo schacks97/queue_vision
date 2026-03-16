@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block head_title %}{{ job.original_filename|default:"Video" }} — Analytics{% endblock head_title %}
+
+{% block page_title %}Video Analytics{% endblock page_title %}
+
+{% block styles %}
+<style>
+  .summary-card .icon-circle {
+    width: 48px; height: 48px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
+  }
+  .summary-card .value { font-size: 1.5rem; font-weight: 700; }
+  .summary-card .label { color: #6c757d; font-size: .85rem; }
+  .card { border: none; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+  .card-header { background: transparent; border-bottom: 1px solid #eee; }
+  .result-video { width: 100%; border-radius: 8px; background: #000; }
+  .table-vehicle th {
+    font-size: .8rem; text-transform: uppercase; letter-spacing: .5px; color: #6c757d;
+    border-bottom-width: 2px;
+  }
+  .table-scroll-wrapper { max-height: 420px; overflow-y: auto; }
+  .table-scroll-wrapper thead th { position: sticky; top: 0; background: #fff; z-index: 1; }
+  .badge-class { font-size: .75rem; font-weight: 600; padding: 4px 10px; border-radius: 20px; }
+  .badge-car        { background: #d4edda; color: #155724; }
+  .badge-truck      { background: #fff3cd; color: #856404; }
+  .badge-bus        { background: #cce5ff; color: #004085; }
+  .badge-motorcycle { background: #f8d7da; color: #721c24; }
+</style>
+{% endblock styles %}
+
+{% block content %}
+<div class="row mt-3 g-3">
+
+  <!-- ═══ Summary Cards ═══ -->
+  <div class="col-6 col-lg-3">
+    <div class="card summary-card h-100">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="icon-circle bg-primary bg-opacity-10 text-primary"><i class="fas fa-car"></i></div>
+        <div><div class="value">{{ total_vehicles }}</div><div class="label">Total Vehicles</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card summary-card h-100">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="icon-circle bg-warning bg-opacity-10 text-warning"><i class="fas fa-clock"></i></div>
+        <div><div class="value">{{ avg_wait_display }}</div><div class="label">Average Wait Time</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card summary-card h-100">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="icon-circle bg-danger bg-opacity-10 text-danger"><i class="fas fa-hourglass-end"></i></div>
+        <div><div class="value">{{ max_wait_display }}</div><div class="label">Max Wait Time</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card summary-card h-100">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="icon-circle bg-success bg-opacity-10 text-success"><i class="fas fa-triangle-exclamation"></i></div>
+        <div><div class="value">{{ peak_congestion }}</div><div class="label">Peak Congestion</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ Output Video ═══ -->
+  <div class="col-lg-8">
+    <div class="card h-100">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <h6 class="mb-0 fw-bold">Output Video</h6>
+        {% if output_url %}
+        <a href="{{ output_url }}" class="btn btn-sm btn-outline-primary" download>
+          <i class="fas fa-download me-1"></i>Download
+        </a>
+        {% endif %}
+      </div>
+      <div class="card-body p-0">
+        {% if output_url %}
+        <video class="result-video" controls preload="metadata">
+          <source src="{{ output_url }}" type="video/mp4">
+        </video>
+        {% else %}
+        <div class="text-center py-5 text-muted">
+          <i class="fas fa-video-slash fa-3x mb-3"></i>
+          <p>Output video not available.</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ Vehicle Type Distribution (Chart) ═══ -->
+  <div class="col-lg-4">
+    <div class="card h-100">
+      <div class="card-header">
+        <h6 class="mb-0 fw-bold">Vehicle Type Distribution</h6>
+      </div>
+      <div class="card-body d-flex align-items-center justify-content-center">
+        <canvas id="typeChart" style="max-height:280px;"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ Vehicle Detail Table ═══ -->
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <h6 class="mb-0 fw-bold">Vehicle Wait Times</h6>
+        {% if vehicles %}
+        <button type="button" class="btn btn-sm btn-outline-success" id="downloadCsvBtn">
+          <i class="fas fa-file-csv me-1"></i>Download CSV
+        </button>
+        {% endif %}
+      </div>
+      <div class="card-body p-0">
+        {% if vehicles %}
+        <div class="table-scroll-wrapper">
+          <table class="table table-hover table-vehicle mb-0" id="vehicleTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Track ID</th>
+                <th>Class</th>
+                <th>Wait Time</th>
+                <th>Seconds</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for v in vehicles %}
+              <tr>
+                <td>{{ forloop.counter }}</td>
+                <td class="fw-semibold">{{ v.track_id }}</td>
+                <td><span class="badge badge-class badge-{{ v.class_name }}">{{ v.class_name }}</span></td>
+                <td class="fw-semibold">{{ v.wait_display }}</td>
+                <td>{{ v.wait_seconds|floatformat:1 }}s</td>
+                <td>
+                  {% if v.active %}
+                  <span class="badge bg-primary">In ROI</span>
+                  {% else %}
+                  <span class="badge bg-secondary">Exited</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4 text-muted">
+          <p class="mb-0">No vehicles were detected in the ROI.</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Back -->
+  <div class="col-12 text-center mb-3">
+    <a href="{% url 'analytics:overview' %}" class="btn btn-outline-secondary me-2">
+      <i class="fas fa-arrow-left me-1"></i>Back to Analytics
+    </a>
+  </div>
+
+</div>
+{% endblock content %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+  // ── Vehicle Type Distribution (Pie / Doughnut) ──
+  var classLabels = {{ class_labels|safe }};
+  var classValues = {{ class_values|safe }};
+  var typeColors  = ["#198754","#0d6efd","#ffc107","#dc3545","#6f42c1","#0dcaf0"];
+
+  new Chart(document.getElementById("typeChart"), {
+    type: "doughnut",
+    data: {
+      labels: classLabels,
+      datasets: [{
+        data: classValues,
+        backgroundColor: typeColors.slice(0, classLabels.length),
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: "bottom" } }
+    }
+  });
+
+
+  // ── CSV download ──
+  var btn = document.getElementById("downloadCsvBtn");
+  if (btn) {
+    btn.addEventListener("click", function () {
+      var table = document.getElementById("vehicleTable");
+      var rows = table.querySelectorAll("tr");
+      var csv = [];
+      rows.forEach(function (row) {
+        var cols = row.querySelectorAll("th, td");
+        var line = [];
+        cols.forEach(function (col) {
+          var text = col.innerText.replace(/"/g, '""').trim();
+          line.push('"' + text + '"');
+        });
+        csv.push(line.join(","));
+      });
+      var blob = new Blob([csv.join("\n")], { type: "text/csv;charset=utf-8;" });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url;
+      a.download = "analytics_{{ job.id }}.csv";
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+  }
+});
+</script>
+{% endblock scripts %}

@@ -1,0 +1,46 @@
+<nav class="navbar navbar-expand navbar-light navbar-bg">
+  <a class="sidebar-toggle js-sidebar-toggle">
+    <i class="hamburger align-self-center"></i>
+  </a>
+
+  <span class="fs-5">
+    {{ request.user.company.company_name }}
+  </span>
+
+
+  <div class="navbar-collapse collapse">
+    <ul class="navbar-nav navbar-align">
+
+      <li class="nav-item dropdown">
+        <a class="nav-icon dropdown-toggle d-inline-block d-sm-none" href="#" data-bs-toggle="dropdown">
+          <i class="align-middle" data-feather="settings"></i>
+        </a>
+
+        <a class="nav-link dropdown-toggle d-none d-sm-inline-block" href="#" data-bs-toggle="dropdown">
+          <i class="align-middle me-1" data-feather="user"></i> <span
+            class="text-dark">{{ request.user.full_name|default:request.user.email }}</span>
+        </a>
+        <div class="dropdown-menu dropdown-menu-end">
+
+          <a class="dropdown-item" href="{% url 'user:company_license' %}">
+            <i class="align-middle me-1" data-feather="key"></i>
+            License
+          </a>
+ 
+          <a class="dropdown-item" href="{% url 'account_change_password' %}"><i class="align-middle me-1"
+              data-feather="settings"></i>
+            Change Password
+          </a>
+
+          <div class="dropdown-divider"></div>
+          <a class="dropdown-item" href="{% url 'account_logout' %}">
+              <button class="btn border-0 w-100 p-0 text-start text-danger" type="submit">
+                <i class="fa-solid fa-power-off text-danger me-1"></i>
+                <span>Logout</span>
+              </button>
+          </a>
+        </div>
+      </li>
+    </ul>
+  </div>
+</nav>

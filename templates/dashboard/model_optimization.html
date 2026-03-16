@@ -1,0 +1,309 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block head_title %}Model Optimization — QueueVision{% endblock head_title %}
+
+{% block page_title %}Model Optimization{% endblock page_title %}
+
+
+{% block styles %}
+<style>
+  .card { border: none; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+  .card-header { background: transparent; border-bottom: 1px solid #eee; }
+  .config-label {
+    font-size: 0.82rem; font-weight: 600; color: #495057;
+    margin-bottom: 4px;
+  }
+  .format-card {
+    cursor: pointer;
+    border: 2px solid #dee2e6;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .format-card.selected {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 3px rgba(13,110,253,.15);
+  }
+  .format-card:hover { border-color: #6ea8fe; }
+  .artifact-badge { font-size: .78rem; }
+  .status-pending   { color: #6c757d; }
+  .status-processing{ color: #0d6efd; }
+  .status-ready     { color: #198754; }
+  .status-failed    { color: #dc3545; }
+  .pulse { animation: pulse-anim 1.2s infinite; }
+  @keyframes pulse-anim {
+    0%   { opacity: 1; }
+    50%  { opacity: .4; }
+    100% { opacity: 1; }
+  }
+</style>
+{% endblock styles %}
+
+{% block content %}
+<div class="row mt-3 g-3">
+
+  <!-- ══════════════════════════════════════════════════════
+       Convert — Select model + format and kick off export
+       ══════════════════════════════════════════════════════ -->
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header d-flex align-items-center gap-2 py-3">
+        <i class="fas fa-exchange-alt text-primary"></i>
+        <h6 class="mb-0 fw-bold">Export Model</h6>
+      </div>
+      <div class="card-body">
+
+        <!-- Model selection -->
+        <div class="row g-3 mb-4">
+          <div class="col-sm-6">
+            <label for="optFamilySelect" class="config-label">Model Family</label>
+            <select id="optFamilySelect" class="form-select">
+              {% for fam in available_models %}
+              <option value="{{ fam.id }}">{{ fam.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-sm-6">
+            <label for="optVariantSelect" class="config-label">Model Variant</label>
+            <select id="optVariantSelect" class="form-select"></select>
+          </div>
+        </div>
+
+        <!-- Format selection -->
+        <label class="config-label mb-2">Target Format</label>
+        <div class="row g-3 mb-4">
+          <div class="col-6">
+            <div class="format-card rounded-3 p-3 text-center selected" data-format="onnx">
+              <i class="fas fa-project-diagram fa-2x mb-2 text-success"></i>
+              <div class="fw-bold">ONNX</div>
+              <small class="text-muted">Cross-platform, CPU/GPU</small>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="format-card rounded-3 p-3 text-center" data-format="tensorrt">
+              <i class="fas fa-microchip fa-2x mb-2 text-danger"></i>
+              <div class="fw-bold">TensorRT</div>
+              <small class="text-muted">NVIDIA FP16 optimized</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Convert button -->
+        <button id="convertBtn" class="btn btn-primary w-100 py-2">
+          <i class="fas fa-cogs me-1"></i> Convert Model
+        </button>
+        <div id="convertMsg" class="mt-2 text-center small" style="display:none;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       Artifacts table — existing converted models
+       ══════════════════════════════════════════════════════ -->
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header d-flex align-items-center gap-2 py-3">
+        <i class="fas fa-box-open text-primary"></i>
+        <h6 class="mb-0 fw-bold">Converted Models</h6>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0" id="artifactTable">
+            <thead>
+              <tr class="text-muted" style="font-size:.78rem; text-transform:uppercase; letter-spacing:.5px;">
+                <th class="ps-3">Model</th>
+                <th>Format</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for art in artifacts %}
+              <tr data-id="{{ art.pk }}">
+                <td class="ps-3 fw-semibold">{{ art.source_model }}</td>
+                <td>
+                  <span class="badge bg-{% if art.target_format == 'onnx' %}success{% else %}danger{% endif %} bg-opacity-10
+                        text-{% if art.target_format == 'onnx' %}success{% else %}danger{% endif %} artifact-badge">
+                    {{ art.get_target_format_display }}
+                  </span>
+                </td>
+                <td class="status-cell">
+                  <span class="status-{{ art.status }} fw-semibold"
+                        {% if art.status == 'failed' %}title="{{ art.error_message }}"{% endif %}>
+                    {% if art.status == 'processing' %}<i class="fas fa-spinner fa-spin me-1"></i>{% endif %}
+                    {{ art.get_status_display }}
+                  </span>
+                </td>
+              </tr>
+              {% empty %}
+              <tr id="emptyRow">
+                <td colspan="3" class="text-center text-muted py-4">
+                  No converted models yet. Use the panel on the left to export.
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock content %}
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+  /* ── helpers ─────────────────────────────────────────── */
+  function getCookie(n) {
+    var v = document.cookie.match('(^|;)\\s*' + n + '\\s*=\\s*([^;]+)');
+    return v ? v.pop() : '';
+  }
+  function postJSON(url, body) {
+    return fetch(url, {
+      method: "POST",
+      headers: {"Content-Type":"application/json", "X-CSRFToken": getCookie("csrftoken")},
+      body: JSON.stringify(body)
+    });
+  }
+
+  /* ── model family → variant dropdown ────────────────── */
+  var modelsData = [
+    {% for fam in available_models %}
+    { id: "{{ fam.id }}", variants: [
+      {% for v in fam.variants %}{ id: "{{ v.id }}", name: "{{ v.name }}" },{% endfor %}
+    ]},
+    {% endfor %}
+  ];
+  var currentModel = "{{ current_model }}";
+  var familySelect  = document.getElementById("optFamilySelect");
+  var variantSelect = document.getElementById("optVariantSelect");
+
+  function populateVariants(familyId) {
+    variantSelect.innerHTML = "";
+    var fam = modelsData.find(function(f){ return f.id === familyId; });
+    if (!fam) return;
+    fam.variants.forEach(function(v) {
+      var opt = document.createElement("option");
+      opt.value = v.id;
+      opt.textContent = v.name;
+      if (v.id === currentModel) opt.selected = true;
+      variantSelect.appendChild(opt);
+    });
+  }
+
+  var initFamily = modelsData[0] ? modelsData[0].id : "";
+  modelsData.forEach(function(fam) {
+    fam.variants.forEach(function(v) {
+      if (v.id === currentModel) initFamily = fam.id;
+    });
+  });
+  familySelect.value = initFamily;
+  populateVariants(initFamily);
+  familySelect.addEventListener("change", function () { populateVariants(this.value); });
+
+  /* ── format toggle ──────────────────────────────────── */
+  var selectedFormat = "onnx";
+  document.querySelectorAll(".format-card").forEach(function(card) {
+    card.addEventListener("click", function () {
+      document.querySelectorAll(".format-card").forEach(function(c){ c.classList.remove("selected"); });
+      card.classList.add("selected");
+      selectedFormat = card.dataset.format;
+    });
+  });
+
+  /* ── Convert button ─────────────────────────────────── */
+  var convertBtn = document.getElementById("convertBtn");
+  var convertMsg = document.getElementById("convertMsg");
+
+  function showMsg(text, cls) {
+    convertMsg.className = "mt-2 text-center small " + cls;
+    convertMsg.textContent = text;
+    convertMsg.style.display = "block";
+  }
+
+  function triggerConversion(sourceModel, targetFormat) {
+    convertBtn.disabled = true;
+    showMsg("Starting conversion…", "text-primary");
+
+    postJSON("{% url 'dashboard:start_conversion' %}", {
+      source_model: sourceModel,
+      target_format: targetFormat
+    }).then(function(resp) {
+      return resp.json().then(function(d) { return {ok: resp.ok, data: d}; });
+    }).then(function(res) {
+      convertBtn.disabled = false;
+      if (!res.ok) {
+        showMsg(res.data.error || "Conversion failed", "text-danger");
+        return;
+      }
+      showMsg("Conversion started! Polling for status…", "text-success");
+      // Remove empty row if present
+      var er = document.getElementById("emptyRow");
+      if (er) er.remove();
+      // Add or update row
+      addOrUpdateRow(res.data.id, sourceModel, targetFormat, "processing");
+      pollStatus(res.data.id);
+    }).catch(function() {
+      convertBtn.disabled = false;
+      showMsg("Network error", "text-danger");
+    });
+  }
+
+  convertBtn.addEventListener("click", function () {
+    triggerConversion(variantSelect.value, selectedFormat);
+  });
+
+  /* ── Artifact table helpers ─────────────────────────── */
+  var tbody = document.querySelector("#artifactTable tbody");
+
+  function addOrUpdateRow(id, model, format, status) {
+    var existing = tbody.querySelector('tr[data-id="' + id + '"]');
+    if (existing) {
+      existing.querySelector(".status-cell").innerHTML = statusHTML(status);
+      return;
+    }
+    var formatBadge = format === "onnx"
+      ? '<span class="badge bg-success bg-opacity-10 text-success artifact-badge">ONNX</span>'
+      : '<span class="badge bg-danger bg-opacity-10 text-danger artifact-badge">TensorRT</span>';
+    var tr = document.createElement("tr");
+    tr.dataset.id = id;
+    tr.innerHTML = '<td class="ps-3 fw-semibold">' + model + '</td>'
+      + '<td>' + formatBadge + '</td>'
+      + '<td class="status-cell">' + statusHTML(status) + '</td>';
+    tbody.appendChild(tr);
+  }
+
+  function statusHTML(status) {
+    if (status === "processing") return '<span class="status-processing fw-semibold"><i class="fas fa-spinner fa-spin me-1"></i>Processing</span>';
+    if (status === "ready")      return '<span class="status-ready fw-semibold">Ready</span>';
+    if (status === "failed")     return '<span class="status-failed fw-semibold">Failed</span>';
+    return '<span class="status-pending fw-semibold">Pending</span>';
+  }
+
+  /* ── Poll status ────────────────────────────────────── */
+  function pollStatus(id) {
+    var url = "{% url 'dashboard:artifact_status' pk=0 %}".replace("/0/", "/" + id + "/");
+    var interval = setInterval(function() {
+      fetch(url).then(function(r){ return r.json(); }).then(function(d) {
+        if (d.status === "processing") return; // keep polling
+        clearInterval(interval);
+        var row = tbody.querySelector('tr[data-id="' + id + '"]');
+        if (row) {
+          row.querySelector(".status-cell").innerHTML = statusHTML(d.status);
+        }
+        if (d.status === "ready") showMsg("Conversion complete!", "text-success");
+        if (d.status === "failed") showMsg("Conversion failed: " + (d.error_message || "Unknown error"), "text-danger");
+      });
+    }, 3000);
+  }
+
+  // Auto-poll any processing rows on page load
+  document.querySelectorAll('tr[data-id]').forEach(function(row) {
+    var statusEl = row.querySelector('[class*="status-processing"]');
+    if (statusEl) pollStatus(parseInt(row.dataset.id));
+  });
+
+});
+</script>
+{% endblock scripts %}

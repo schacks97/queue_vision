@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block head_title %}User Management{% endblock head_title %}
+
+{% block page_title %}User Management{% endblock page_title %}
+
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-users me-2"></i>
+                    Company Users ({{ total_users }})
+                    <span class="badge bg-success ms-2">{{ active_users }} Active</span>
+                </h5>
+                <div>
+                    <a href="{% url 'user:user_create' %}" class="btn btn-primary">
+                        <i class="fas fa-user-plus me-1"></i>
+                        Add New User
+                    </a>
+                </div>
+            </div>
+            
+            <div class="card-body">
+                <!-- Company Info -->
+                <div class="alert alert-info mb-4">
+                    <i class="fas fa-building me-2"></i>
+                    <strong>Company:</strong> {{ request.user.company.company_name }} | 
+                    <strong>CIN:</strong> {{ request.user.company.cin }}
+                </div>
+                
+                <!-- Filter Form -->
+                <form method="get" class="mb-4">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-3">
+                            <label for="{{ filter.form.search.id_for_label }}" class="form-label small">Search</label>
+                            {{ filter.form.search }}
+                        </div>
+                        
+                        <div class="col-md-2">
+                            <label for="{{ filter.form.company.id_for_label }}" class="form-label small">Company</label>
+                            {{ filter.form.company }}
+                        </div>
+                        
+                        <div class="col-md-2">
+                            <label for="{{ filter.form.is_active.id_for_label }}" class="form-label small">Status</label>
+                            {{ filter.form.is_active }}
+                        </div>
+                        
+                        <div class="col-md-2">
+                            <label for="{{ filter.form.is_staff.id_for_label }}" class="form-label small">Role</label>
+                            {{ filter.form.is_staff }}
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary flex-fill">
+                                    <i class="fas fa-search me-1"></i>Filter
+                                </button>
+                                <a href="{% url 'user:user_list' %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-redo"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+                
+                {% if users %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover align-middle">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th class="text-white">Name</th>
+                                    <th class="text-white">Email</th>
+                                    <th class="text-white">Role</th>
+                                    <th class="text-white">Status</th>
+                                    <th class="text-white">Date Joined</th>
+                                    <th class="text-white">Last Updated</th>
+                                    <th class="text-white">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in users %}
+                                <tr {% if not user.is_active %}class="table-secondary"{% endif %}>
+                                    <td>
+                                        <strong>{{ user.full_name }}</strong>
+                                        {% if user.uuid == request.user.uuid %}
+                                            <span class="badge bg-info ms-2">You</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ user.email }}</td>
+                                    <td>
+                                        {% if user.is_staff %}
+                                            <span class="badge bg-warning text-dark">Staff</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">User</span>
+                                        {% endif %}
+                                    <td>
+                                        {% if user.is_active %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ user.date_joined|date:"M d, Y" }}</td>
+                                    <td>{{ user.updated_at|date:"M d, Y H:i" }}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a href="{% url 'user:user_detail' user.uuid %}" 
+                                               class="btn btn-outline-info" 
+                                               title="View"
+                                               data-bs-toggle="tooltip">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{% url 'user:user_update' user.uuid %}" 
+                                               class="btn btn-outline-warning" 
+                                               title="Edit"
+                                               data-bs-toggle="tooltip">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            {% if user.uuid != request.user.uuid %}
+                                                <button type="button"
+                                                        class="btn btn-outline-danger" 
+                                                        title="Delete"
+                                                        data-bs-toggle="tooltip"
+                                                        onclick="openDeleteModal('{{ user.uuid }}', '{{ user.full_name }}', '{{ user.email }}', '{{ user.company.company_name }}')">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    {% if is_paginated %}
+                        <nav aria-label="Users pagination">
+                            <ul class="pagination justify-content-center">
+                                {% if page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=1">First</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                                    </li>
+                                {% endif %}
+                                
+                                <li class="page-item active">
+                                    <span class="page-link">
+                                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                                    </span>
+                                </li>
+                                
+                                {% if page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last</a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    {% endif %}
+                {% else %}No users match your search criteria.</p>
+              
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Include Delete Modal -->
+{% include "user/_partials/delete_modal.html" %}
+
+{% endblock content %}
+
+{% block scripts %}
+<script>
+    
+    // Function to open delete modal with user data
+    function openDeleteModal(userId, userName, userEmail, userCompany) {
+        document.getElementById('deleteUserName').textContent = userName;
+        document.getElementById('deleteUserEmail').textContent = userEmail;
+        document.getElementById('deleteUserCompany').textContent = userCompany;
+        
+        const form = document.getElementById('deleteUserForm');
+        form.action = "{% url 'user:user_list' %}".replace('users/', 'users/' + userId + '/delete/');
+        
+        const modal = new bootstrap.Modal(document.getElementById('deleteUserModal'));
+        modal.show();
+    }document.querySelectorAll('#id_permission, #id_segment, #id_branch, #id_status').forEach(function(select) {
+        select.addEventListener('change', function() {
+            this.form.submit();
+        });
+    });
+</script>
+{% endblock scripts %}

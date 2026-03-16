@@ -1,0 +1,61 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+
+    <title>{% block head_title %}{% endblock head_title %} - QueueVision</title>
+
+    <!-- Favicons -->
+    <link href="{% static 'favicon.ico' %}" rel="icon" />
+    <link href="{% static 'favicon.ico' %}" rel="apple-touch-icon" />
+
+    <!-- Bootstrap Core -->
+    <link
+      href="{% static '_css/bootstrap/bootstrap.min.css' %}"
+      rel="stylesheet"
+    />
+
+    <!-- Font -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Font Awesome -->
+    <link
+      href="{% static 'fontawesomefree/css/all.css' %}"
+      rel="stylesheet"
+      type="text/css"
+    />
+
+    <!-- Theme CSS -->
+    <link href="{% static 'dashboard/css/theme.css' %}" rel="stylesheet" />
+
+    <!-- Custom CSS -->
+    <link href="{% static '_css/main.css' %}" rel="stylesheet" />
+    <link href="{% static '_css/theme_override.css' %}" rel="stylesheet" />
+    <link href="{% static '_css/auth.css' %}" rel="stylesheet" />
+
+    {% block styles %}{% endblock styles %}
+  </head>
+
+  <body>
+    {% block content %}{% endblock content %}
+
+    <script defer src="{% static '_js/jquery.min.js' %}"></script>
+    <script
+      defer
+      src="{% static '_js/bootstrap/bootstrap.bundle.min.js' %}"
+    ></script>
+    <!-- Custom JS -->
+    <script defer src="{% static 'dashboard/js/theme.js' %}"></script>
+    <script defer src="{% static '_js/auth.js' %}"></script>
+    {% block scripts %}{% endblock scripts %}
+  </body>
+</html>
